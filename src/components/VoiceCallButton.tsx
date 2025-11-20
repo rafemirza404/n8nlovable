@@ -101,7 +101,9 @@ const VoiceCallButton = () => {
     const vapi = vapiRef.current;
 
     vapi.on("call-start", () => {
-      console.log("Call started");
+      console.log("🎉 VAPI EVENT: Call started successfully!");
+      console.log("📊 Current pendingCallDataRef:", pendingCallDataRef.current);
+
       setIsCallActive(true);
       setShowIntroModal(false);
       setCallStartTime(new Date());
@@ -139,8 +141,22 @@ const VoiceCallButton = () => {
     });
 
     vapi.on("message", (message: any) => {
+      console.log("📨 VAPI Message received:", JSON.stringify(message, null, 2));
+
       if (message.type === "call-started" && message.call?.id) {
+        console.log("✅ Call started with ID:", message.call.id);
+        console.log("📋 Call details:", message.call);
         setVapiCallId(message.call.id);
+      }
+
+      // Log transcript messages to see what the assistant is saying
+      if (message.type === "transcript" || message.transcript) {
+        console.log("💬 Transcript:", message.transcript || message);
+      }
+
+      // Log assistant messages
+      if (message.type === "assistant-request" || message.role === "assistant") {
+        console.log("🤖 Assistant:", message);
       }
     });
 
@@ -419,14 +435,6 @@ const VoiceCallButton = () => {
       }
 
       console.log("✅ Starting call with data from ref:", callData);
-      console.log("✅ Variables to send to VAPI:", {
-        name: callData.name,
-        email: callData.email,
-        company: callData.company,
-        role: callData.role,
-        phone: callData.phone,
-        callSource: "website",
-      });
 
       // FIX: Use exact format from VAPI GitHub docs
       const assistantOverrides = {
@@ -440,9 +448,22 @@ const VoiceCallButton = () => {
         },
       };
 
-      console.log("✅ Calling vapi.start() with overrides:", assistantOverrides);
+      console.log("📞 VAPI CALL PARAMETERS:");
+      console.log("   Assistant ID: a2cc1d26-9117-436f-a991-15b6d80de3b1");
+      console.log("   Assistant Overrides:", JSON.stringify(assistantOverrides, null, 2));
+      console.log("   Individual Variables:");
+      console.log("     - name:", callData.name);
+      console.log("     - email:", callData.email);
+      console.log("     - company:", callData.company);
+      console.log("     - role:", callData.role);
+      console.log("     - phone:", callData.phone);
+      console.log("     - callSource: website");
 
-      await vapiRef.current?.start("a2cc1d26-9117-436f-a991-15b6d80de3b1", assistantOverrides);
+      console.log("🚀 Initiating VAPI call...");
+
+      const startResult = await vapiRef.current?.start("a2cc1d26-9117-436f-a991-15b6d80de3b1", assistantOverrides);
+
+      console.log("✅ VAPI start() returned:", startResult);
 
       // Save last call time
       localStorage.setItem('agentblue_last_call', Date.now().toString());
